@@ -1981,12 +1981,13 @@ pub fn rules_numbers(b: &mut RuleSetBuilder<Dimension>) -> RustlingResult<()> {
         }
     );
     b.rule_1_terminal("ordinal (100, 1_000, 1_000_000)",
-        b.reg(r#"(cent|mill|million)i[èe]me"#)?,
+        b.reg(r#"(cent|mill|million|milliard)i[èe]me"#)?,
         |text_match| {
             let value = match text_match.group(1).as_ref() {
                 "cent" => 100,
                 "mill" => 1_000,
                 "million" => 1_000_000,
+                "milliard" => 1_000_000_000,
                 _ => return Err(RuleErrorKind::Invalid.into()),
             };
             Ok(OrdinalValue::new(value))
@@ -1995,20 +1996,21 @@ pub fn rules_numbers(b: &mut RuleSetBuilder<Dimension>) -> RustlingResult<()> {
 
     b.rule_2("ordinal (200..900, 2_000..9_000, 2_000_000..9_000_000)",
         integer_check_by_range!(2, 99),
-        b.reg(r#"(cent|mill|million)i[èe]me"#)?,
+        b.reg(r#"(cent|mill|million|milliard)i[èe]me"#)?,
         |integer, text_match| {
             let value = match text_match.group(1).as_ref() {
                 "cent" => 100,
                 "mill" => 1_000,
                 "million" => 1_000_000,
+                "milliard" => 1_000_000_000,
                 _ => return Err(RuleErrorKind::Invalid.into()),
             };
             Ok(OrdinalValue::new(integer.value().value * value))
         }
     );
-    b.rule_2("ordinal (101...9_999_999)",
-        integer_check!(|integer: &IntegerValue| integer.value >= 100 || integer.value % 100 == 0),
-        ordinal_check_by_range!(2, 99),
+    b.rule_2("ordinal (102...9_999_999)",
+        integer_check!(|integer: &IntegerValue| integer.value > 100 || integer.value % 100 == 0),
+        ordinal_check_by_range!(2, 100),
         |integer, ordinal| {
             Ok(OrdinalValue::new(integer.value().value + ordinal.value().value))
         }
