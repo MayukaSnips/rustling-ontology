@@ -1151,32 +1151,44 @@ pub fn rules_time(b: &mut RuleSetBuilder<Dimension>) -> RustlingResult<()> {
     //                   |text_match| helpers::month_day(
     //                       text_match.group(1).parse()?,
     //                       text_match.group(2).parse()?)
-    // );
-    b.rule_1_terminal("morning",
-        b.reg(r#"朝の?|午前中?|今朝"#)?,
+    // ):
+
+
+	b.rule_1_terminal("A.M.",
+        b.reg(r#"午前中"#)?,
         |_| {
-            Ok(helpers::hour(4, false)?
+            Ok(helpers::hour(0, false)?
                 .span_to(&helpers::hour(12, false)?, false)?
+                .latent()
+                .form(Form::PartOfDay(PartOfDayForm::Morning)))
+        }
+    );
+    b.rule_1_terminal("early morning",
+        b.reg(r#"明け方|早朝|朝早く"#)?,
+        |_| {
+            Ok(helpers::hour(3, false)?
+                .span_to(&helpers::hour(6, false)?, false)?
+                .latent()
+                .form(Form::PartOfDay(PartOfDayForm::Morning)))
+        }
+    );
+	b.rule_1_terminal("morning",
+        b.reg(r#"朝の?|今朝"#)?,
+        |_| {
+            Ok(helpers::hour(6, false)?
+                .span_to(&helpers::hour(9, false)?, false)?
                 .latent()
                 .form(Form::PartOfDay(PartOfDayForm::Morning)))
         }
     );
     b.rule_1_terminal("breakfast",
         b.reg(r#"朝(?:食|ごはん|ご飯)"#)?,
-        |_| Ok(helpers::hour(5, false)?
-                .span_to(&helpers::hour(10, false)?, false)?
+        |_| Ok(helpers::hour(6, false)?
+                .span_to(&helpers::hour(9, false)?, false)?
                 .latent()
                 .form(Form::Meal))
     );
-    b.rule_1_terminal("early morning",
-        b.reg(r#"明け方|早朝|朝早く"#)?,
-        |_| {
-            Ok(helpers::hour(4, false)?
-                .span_to(&helpers::hour(8, false)?, false)?
-                .latent()
-                .form(Form::PartOfDay(PartOfDayForm::Morning)))
-        }
-    );
+    
     b.rule_1_terminal("before work",
         b.reg(r#"仕事の?前"#)?,
         |_| {
@@ -1193,11 +1205,27 @@ pub fn rules_time(b: &mut RuleSetBuilder<Dimension>) -> RustlingResult<()> {
             Ok(period.form(Form::PartOfDay(PartOfDayForm::None)))
         }
     );
-    b.rule_1_terminal("afternoon",
+     b.rule_1_terminal("before noon",
+        b.reg(r#"昼前"#)?,
+        |_| {
+            let period = helpers::hour(9, false)?
+                    .span_to(&helpers::hour(12, false)?, false)?;
+            Ok(period.form(Form::PartOfDay(PartOfDayForm::None)))
+        }
+    );
+     b.rule_1_terminal("after noon",
+        b.reg(r#"昼過ぎ"#)?,
+        |_| {
+            let period = helpers::hour(12, false)?
+                    .span_to(&helpers::hour(15, false)?, false)?;
+            Ok(period.form(Form::PartOfDay(PartOfDayForm::None)))
+        }
+    );
+    b.rule_1_terminal("P.M.",
         b.reg(r#"午後"#)?,
         |_| {
             Ok(helpers::hour(12, false)?
-                .span_to(&helpers::hour(17, false)?, false)?
+                .span_to(&helpers::hour(24, false)?, false)?
                 .latent()
                 .form(Form::PartOfDay(PartOfDayForm::Afternoon)))
         }
@@ -1205,12 +1233,23 @@ pub fn rules_time(b: &mut RuleSetBuilder<Dimension>) -> RustlingResult<()> {
     b.rule_1_terminal("evening",
         b.reg(r#"夕方"#)?,
         |_| {
-            Ok(helpers::hour(16, false)?
-                .span_to(&helpers::hour(19, false)?, false)?
+            Ok(helpers::hour(15, false)?
+                .span_to(&helpers::hour(18, false)?, false)?
                 .latent()
                 .form(Form::PartOfDay(PartOfDayForm::Evening)))
         }
     );
+     b.rule_1_terminal("daytime",
+        b.reg(r#"日中"#)?,
+        |_| {
+            Ok(helpers::hour(9, false)?
+                .span_to(&helpers::hour(18, false)?, false)?
+                .latent()
+                .form(Form::PartOfDay(PartOfDayForm::Evening)))
+        }
+    );
+
+   
 
     b.rule_1_terminal("night",
         b.reg(r#"夜|晩|晚"#)?,
@@ -1229,7 +1268,7 @@ pub fn rules_time(b: &mut RuleSetBuilder<Dimension>) -> RustlingResult<()> {
                 .form(Form::Meal))
     );
     b.rule_1_terminal("lunch",
-        b.reg(r#"昼食|お昼ご飯|昼ごはん"#)?,
+        b.reg(r#"昼食|お昼ご飯|昼ごはん|ランチ"#)?,
         |_| {
             Ok(helpers::hour(12, false)?
                 .span_to(&helpers::hour(14, false)?, false)?
@@ -1291,7 +1330,7 @@ pub fn rules_time(b: &mut RuleSetBuilder<Dimension>) -> RustlingResult<()> {
         }
     );
     b.rule_1_terminal("after lunch",
-        b.reg(r#"(?:昼食後|ランチタイム後)に?"#)?,
+        b.reg(r#"(?:食後|ランチタイム後)に?"#)?,
         |_| {
             let period = helpers::hour(13, false)?.span_to(&helpers::hour(17, false)?, false)?;
             Ok(helpers::cycle_nth(Grain::Day, 0)?
@@ -1375,7 +1414,7 @@ pub fn rules_time(b: &mut RuleSetBuilder<Dimension>) -> RustlingResult<()> {
         }
     );
     b.rule_2("afternoon <time-of-day>",
-        b.reg(r#"昼の?"#)?,
+        b.reg(r#"の?"#)?,
         time_of_day_check_hour!(1, 7, 13, 19),
         |_, tod| {
             let period = helpers::hour(13, false)?
