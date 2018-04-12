@@ -748,7 +748,7 @@ pub fn rules_time(b: &mut RuleSetBuilder<Dimension>) -> RustlingResult<()> {
         } 
     );
     b.rule_1_terminal("last month of year",
-        b.reg(r#"年?末|年?の暮れ?"#)?,
+        b.reg(r#"年末|年の暮れ"#)?,
         |_| {
             let current_year = helpers::cycle_nth(Grain::Year, 0)?;
             let start = current_year.intersect(&helpers::month(12)?)?;
@@ -1093,7 +1093,7 @@ pub fn rules_time(b: &mut RuleSetBuilder<Dimension>) -> RustlingResult<()> {
         b.reg(r#"夜中の?"#)?,
         time_check!(form!(Form::TimeOfDay(_))),
         |_, tod| {
-            let day_period = helpers::hour(0, false)?.span_to(&helpers::hour(12, false)?, false)?;
+            let day_period = helpers::hour(0, false)?.span_to(&helpers::hour(3, false)?, false)?;
             Ok(tod.value().intersect(&day_period)?.form(tod.value().form.clone()))
         }
     );
